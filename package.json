@@ -1,0 +1,31 @@
+{
+  "name": "Soros",
+  "version": "0.0.1",
+  "description": "A digital currency trading bot for automated trading at various exchanges",
+  "keywords": [
+    "trading",
+    "bot",
+    "node",
+    "btc",
+    "bitcoin",
+    "altcoin"
+  ],
+  "scripts": {
+    "test": "scripts/run_unit_tests"
+  },
+  "author": "Ben Van Wagner <benvanwagner@gmail.com>",
+  "dependencies": {
+    "cryptsyv2-api": "0.0.x",
+    "async": "0.2.x",
+    "nedb": "0.9.4",
+    "line-reader": "0.2.x",
+  },
+  "devDependencies": {
+    "nodeunit": "0.8.2"
+  },
+  "engines": { "node": ">=0.10.x" },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jamin84/soros.git"
+  }
+}
