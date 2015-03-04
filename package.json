@@ -10,15 +10,15 @@
     "bitcoin",
     "altcoin"
   ],
-  "scripts": {
-    "test": "scripts/run_unit_tests"
-  },
   "author": "Ben Van Wagner <benvanwagner@gmail.com>",
   "dependencies": {
+    "request" : "2.53.0",
     "cryptsyv2-api": "0.0.x",
     "async": "0.2.x",
     "nedb": "0.9.4",
     "line-reader": "0.2.x",
+    "lodash": "2.x",
+    "moment": "2.4.x"
   },
   "devDependencies": {
     "nodeunit": "0.8.2"
