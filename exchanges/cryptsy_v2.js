@@ -1,9 +1,9 @@
-var cryptsy = require("cryptsy-api");
-   moment = require('moment'),
-    async = require('async'),
-        _ = require('lodash'),
-     utils = require('../core/utils'),
-      log = require('../core/log');
+var cryptsy = require("cryptsyv2-api");
+     moment = require('moment'),
+      async = require('async'),
+          _ = require('lodash'),
+      utils = require('../core/utils'),
+        log = require('../core/log');
 
 
 var Trader = function(config) {
@@ -11,7 +11,7 @@ var Trader = function(config) {
   this.secret = config.secret;
   this.currency = config.currency;
   this.asset = config.asset;
-  this.pair = config.asset.toUpperCase() + config.currency.toUpperCase();
+  this.pair = config.asset.toUpperCase() +'_'+ config.currency.toUpperCase();
   
   if( config.market_id )
     this.market_id = config.market_id;
@@ -20,8 +20,7 @@ var Trader = function(config) {
 
   this.cryptsy = new cryptsy(
     this.key,
-    this.secret,
-    2000
+    this.secret
   );
 
   this.market = this.pair;
@@ -29,21 +28,20 @@ var Trader = function(config) {
   _.bindAll(this);
 }
 
-Trader.prototype.returnOrderbook = function(market, callback) {
+Trader.prototype.returnOrderbook = function(market, callback){
+  var client = this.cryptsy;
 
-  var main_trades,
-      client = this.cryptsy,
-      asset = this.asset;
-
-  client.getmarketid(market, function(market_id) {
+  var obCallback = function(e, results) {
 
     log.info("Grabbing Orderbook for id", market);
-    client.singleorderdata(market_id, function(orders){
+
+    if(!e) {
+
       var orderbook = {};
 
       processOrderbook = function(type){
         var temp = [];
-        orders[asset][type].forEach( function(order) {
+        results.data[type].forEach( function(order) {
           // convert to int
           order.amount = Number(order.quantity);
           order.price = Number(order.price);
@@ -54,17 +52,24 @@ Trader.prototype.returnOrderbook = function(market, callback) {
         orderbook[type] = temp;
       }
 
-      if(orders[asset]['sellorders'].length) {
+      if(results.data['sellorders'].length) {
         processOrderbook('sellorders');
       } 
 
-      if(orders[asset]['buyorders'].length) {
+      if(results.data['buyorders'].length) {
         processOrderbook('buyorders');
-      }  
-      
+      }   
+    
       callback(null, orderbook);
-    });
-  });
+      
+    } else {
+      log.debug(e);
+      //retry?
+      client.orderbook({'id':market}, obCallback);
+    }
+  }
+  client.orderbook({'id':market}, obCallback);
+
 }
 
 
@@ -75,33 +80,33 @@ Trader.prototype.return_trades = function(market, callback) {
       client = this.cryptsy;
 
   //log.debug('client is ', client);
-  client.getmarketid(market, function(market_id) {
-      //log.debug('id is', market_id);
-      // Display user's trades in that market
-      client.markettrades(market_id, function(trades) {
-          m_id = market_id;
-          //log.debug("Grabbing trades for id ", market_id);
-          if(trades.length) {
-            //log.debug("There are ", trades.length, 'trades');
-            var full_array = [];
-            //trades = trades.reverse();             
-            trades.forEach( function(trade) {
-              // convert to int
-              trade.amount = Number(trade.quantity);
-              trade.price = Number(trade.tradeprice);
-              trade.tid = Number(trade.tradeid);
-              // ISSUE: this assumes that the local machine is in PDT
-              trade.date = moment(Date.parse(trade.datetime)).utc().unix();
-              full_array.push(trade);
-            });
+  var thCallback = function(e, results) {
+    log.debug("Grabbing trades for id", market);
+    if(!e) {
+      if(results.data.length) {
+          //log.debug("There are ", trades.length, 'trades');
+          var full_array = [];
+          //trades = trades.reverse();             
+          results.data.forEach( function(trade) {
+            // convert to int
+            trade.amount = Number(trade.quantity);
+            trade.price = Number(trade.tradeprice);
+            trade.tid = Number(trade.tradeid);
+            // ISSUE: this assumes that the local machine is in PDT
+            trade.date = moment(Date.parse(trade.datetime)).utc().unix();
+            full_array.push(trade);
+          });
 
-            callback(null, full_array);
-          }
-      });
-  });
-  //this.market_id = m_id;  
+          callback(null, full_array);
+      }
+    } else {
+      log.debug(e);
+      //retry?
+      client.tradehistory({'id':market}, thCallback);
+    }
+  }
+  client.tradehistory({'id':market}, thCallback);
 }
-
 
 Trader.prototype.get_bid_ask = function(market, callback) {
 
@@ -110,30 +115,38 @@ Trader.prototype.get_bid_ask = function(market, callback) {
   var client = this.cryptsy;
 
   //log.debug('client is ', client);
-  client.getmarketid(market, function(market_id) {
+  //client.getmarketid(market, function(market_id) {
       //log.debug('id is', market_id);
       // Display user's trades in that market
-      client.markettrades(market_id, function(trades) {
+  var thCallback = function(e, results) {
           //log.debug("Grabbing trades for id ", market_id);
-          if(trades.length) {
-            var data_output = { };
-            trades = trades.reverse();
-            trades.forEach( function(trade) {
-              // convert to int
-              if(trade.initiate_ordertype.toLowerCase() == 'sell') {
-                //log.debug("Sell with initiate_ordertype", trade.initiate_ordertype, 'so using the price as the ask');
-                data_output.bid = Number(trade.tradeprice);
-              } else {
-                //log.debug("Buy with initiate_ordertype", trade.initiate_ordertype, 'so using the price as the bid');
-                data_output.ask = Number(trade.tradeprice);
-              }
-              data_output.datetime = trade.datetime;
-            });
+          log.debug(e);
+          if(!e) {
+            if(results.data.length) {
+              var data_output = { };
+              trades = results.data.reverse();
+              trades.forEach( function(trade) {
+                // convert to int
+                if(trade.initiate_ordertype.toLowerCase() == 'sell') {
+                  //log.debug("Sell with initiate_ordertype", trade.initiate_ordertype, 'so using the price as the ask');
+                  data_output.bid = Number(trade.tradeprice);
+                } else {
+                  //log.debug("Buy with initiate_ordertype", trade.initiate_ordertype, 'so using the price as the bid');
+                  data_output.ask = Number(trade.tradeprice);
+                }
+                data_output.datetime = trade.datetime;
+              });
 
-            callback(null, data_output);
+              callback(null, data_output);
+            }
+          } else {
+            log.debug(e);
+            //retry?
+            client.tradehistory({'id':market}, thCallback);
           }
-      });
-  });
+      }
+      client.tradehistory({'id':market}, thCallback);
+  //});
   //this.market_id = m_id;  
 }
 
@@ -142,11 +155,12 @@ Trader.prototype.return_mkt_id = function(market, callback) {
   var client = this.cryptsy;
 
   //log.debug('client is ', client);
-  client.getmarketid(market, function(market_id) {
+  //client.getmarketid(market, function(market_id) {
       callback(null, market_id);    
-  });
+  //});
   //this.market_id = m_id;  
 }
+
 
 Trader.prototype.getOrderbook = function(callback, descending) {
   var args = _.toArray(arguments),
@@ -168,8 +182,8 @@ Trader.prototype.getOrderbook = function(callback, descending) {
 
 
 Trader.prototype.getTrades = function(since, callback, descending) {
-  var args = _.toArray(arguments);
-  var mkt_id = this.market;
+  var args = _.toArray(arguments),
+      mkt_id = this.market;
 
   var process = function(err, trades) {
     //log.debug("Err is ", err, 'and length of trades is', trades);
@@ -187,7 +201,6 @@ Trader.prototype.getTrades = function(since, callback, descending) {
   this.return_trades(mkt_id, _.bind(process, this));
 
 }
-
 
 
 Trader.prototype.buy = function(amount, price, callback) {
@@ -221,13 +234,12 @@ Trader.prototype.place_order = function(market_name, trans_type, amount, price, 
   //log.debug(trans_type, 'order placed for ', amount, this.asset, ' @', price, this.currency);
 
   //log.debug('client is ', client);
-  client.getmarketid(market_name, function(market_id) {
+  //client.getmarketid(market_name, function(market_id) {
       //log.debug('id is', market_id);
-      client.createorder(market_id, trans_type, amount, price, function(orderid) {
-            callback(null, orderid);
-          
+      client.createOrder(market_name, trans_type, amount, price, function(orderid) {
+        callback(null, orderid);  
       });
-  });
+  //});
 }
 
 
@@ -258,20 +270,21 @@ Trader.prototype.retry = function(method, args, err) {
 }
 
 Trader.prototype.getPortfolio = function(callback) {
-  var args = _.toArray(arguments);
-  var curr_balance, asst_balance;
-  var curr = this.currency;
-  var asst = this.asset;
+  var args = _.toArray(arguments),
+      curr_balance, asst_balance,
+      curr = this.currency,
+      asst = this.asset;
 
-  var calculate = function(data, e) {
+  var calculate = function(data) {log.debug('data:',data);
+
      if(!data)
       return this.retry(this.getPortfolio, args, null);
 
     balances = data.balances_available;
-    holds = data.balances_hold; 
+    holds = data.balances_hold;     
 
-    curr_balance = parseFloat(balances[curr])
-    asst_balance = parseFloat(balances[asst]);
+    //curr_balance = parseFloat(balances[curr])
+    //asst_balance = parseFloat(balances[asst]);
 /*
     if(holds) {
       if(parseFloat(holds[curr])){
@@ -289,7 +302,7 @@ Trader.prototype.getPortfolio = function(callback) {
     callback(null, portfolio);
   }
 
-  this.cryptsy.getinfo(_.bind(calculate, this));
+  this.cryptsy.info(_.bind(calculate, this));
 }
 
 Trader.prototype.getTicker = function(callback) {

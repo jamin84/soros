@@ -20,87 +20,80 @@ var sorosDir = './',
 var async = require('async'),
   	request = require('request'),
 	utils = require(coreDir + 'utils'),
-	log = require(coreDir + 'log');
-
-var	Insights = require(coreDir + 'insights');
+	log = require(coreDir + 'log'),
+	Insights = require(coreDir + 'insights');
 
 //TODO: Find the market with best spread rather than explicitly define one.
 
-var tradingModels = [
-	{
-		'type' : 'conservative',
-		'profitMin' : .05,
-		'profitMax' : 5
-	},
-	{
-		'type' : 'moderate',
-		'profitMin' : 5.01,
-		'profitMax' : 10
-	},
-	{
-		'type' : 'aggressive',
-		'profitMin' : 10.01,
-		'profitMax' : -1
-	}
-];
+var traderBot = function(){
+	/*
 
-var traderBot = function(models){
-/*
+	Create Insights:
+		1. get history
+		2. get orderbook
+		3. run analysis
+	*/
+	var analysis = new Insights();
+	analysis.run();
 
-Create Insights:
-	1. get history
-	2. get orderbook
-	3. run analysis
-*/
-
-
-// getHistory(false);
-
-var analysis = new Insights();
-
-analysis.start();
-
-
-// for each model, see if the current market environment satisfies the conditions
-// i.e if aggressive is too aggressive, try moderate, then conservative
+	// for each model, see if the current market environment satisfies the conditions
+	// i.e if aggressive is too aggressive, try moderate, then conservative
 
 }
 
 
-traderBot(tradingModels);
-/*
+//traderBot();
 
-Buying or selling?
+platform = {};
+
+var loadUserDetails = function(next){
+	var User = require(coreDir + 'user');
+	platform.user = new User(platform);
+
+	//do this within the module?
+	async.series([
+		platform.user.load
+		], 
+		function(){
+			next()
+		}
+	);
+},
+loadMarketData = function(next){
+	//get orderbook
+	//get history
+
+	var MarketManager = require(coreDir + 'marketManager');
+	platform.market = new MarketManager(platform);
+
+	//do this within the module?
+	platform.market.getData();
+	next();
+
+},
+runMarketAnalysis = function(next){
+	var Insights = require(coreDir + 'insights');
+	platform.analysis = new Insights(platform);
+
+	//do this within the module?
+	platform.analysis.run();
+	next();
+}
+
+async.series(
+	  [
+	  	loadUserDetails,
+	  	loadMarketData,
+	  	runMarketAnalysis
+	  ],
+	  function() {
+	  	platform.market.startTrading();
+	  }
+	);
+
+		
 
 
-	
-	WHAT TYPE OF BOT: determines profit outlook
-	
-		MODELS:
-		1. Conservative
-			<= 5%
-		2. Moderate
-			<= 10%
-		3. Aggressive
-			> 10%
-
-	GET TRADE OPPORTUNITIES:
-
-		1. CALCULATE CURRENT SPREAD: highest buy order - lowest sell order
-			a. is this enough for a quick profitable trade regardless of model?
-		2. SET TARGET PROFIT: I think I can make *this* much; 
-			a. Based on model vs projections/insights/momentum and SPREAD
-		3. FIND DAT TARGET PRICE: based on #2
-			a. Adjust for buy/sell walls
-			b. Set price:
-				i. Selling: exit point
-				ii. Buying: entry point
-		4. REFLECT ON MARKET CONDITIONS
-			a. Did another buy order replace mine?
-			b. Check for new walls
-			c. Is someone scooping up coins quickly and can I adjust
-
-*/
 
 
 

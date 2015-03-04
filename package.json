@@ -13,6 +13,7 @@
   "author": "Ben Van Wagner <benvanwagner@gmail.com>",
   "dependencies": {
     "request" : "2.53.0",
+    "cryptsy-api": "0.1.x",
     "cryptsyv2-api": "0.0.x",
     "async": "0.2.x",
     "nedb": "0.9.4",
