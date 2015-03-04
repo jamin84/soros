@@ -62,7 +62,7 @@ Insights.prototype.run = function(callback){
 	//this.getHistory(false);
 
 	this.models = config.tradingModels;
-	this.getOrderbook();
+	this.calculateSpread();
 }
 
 Insights.prototype.getHistoryDay = function(){
@@ -87,8 +87,11 @@ Insights.prototype.getHistory = function(since){
 	this.market.getTrades(since, this.processTrades, false);
 }
 
-Insights.prototype.getOrderbook = function(){
-	this.market.getOrderbook(this.calculateSpread, false);
+Insights.prototype.getOrderbook = function(callback){
+	this.market.getOrderbook(function(err, orderbook){
+		platform.market.orderbook = orderbook;
+		callback(err,orderbook);
+	}, false);
 }
 
 Insights.prototype.processTrades = function(err, trades) {
@@ -108,17 +111,20 @@ Insights.prototype.processTrades = function(err, trades) {
 
 }
 
-Insights.prototype.calculateSpread = function(err, orderbook){
-	log.info('Calculating spread...');
+Insights.prototype.calculateSpread = function(){
 
-	var sell = orderbook['sellorders'][0].price+.00000001,
-		buy = orderbook['buyorders'][0].price+.00000001;
-	var spread = (sell-buy).toFixed(8);
-	log.info('\t', 'Spread:', spread)
-	log.info('\t', 'To buy price: ', buy, ' | To sell price: ', sell );
+	var callback = function(err, orderbook){
+		log.info('Calculating spread...');
 
-	this.calculateProfit(orderbook['buyorders'][0].price, orderbook['sellorders'][0].price, .10);//platform.user.getFund('BTC').amount
+		var sell = orderbook['sellorders'][0].price+.00000001,
+			buy = orderbook['buyorders'][0].price+.00000001;
+		var spread = (sell-buy).toFixed(8);
+		log.info('\t', 'Spread:', spread)
+		log.info('\t', 'To buy price: ', buy, ' | To sell price: ', sell );
 
+		this.calculateProfit(orderbook['buyorders'][0].price, orderbook['sellorders'][0].price, .10);//platform.user.getFund('BTC').amount
+	}
+	this.getOrderbook(_.bind(callback, this));
 	//check orders for entry/exit point
 
 	//if(this.)
@@ -137,27 +143,37 @@ Insights.prototype.calculateProfit = function(buyPrice, sellPrice, currency ){
 
 
 	log.info('\t','Profit %: ', profitPercent.toFixed(2));
-	log.info('\t','Profit (If buying with',currency,this.currency,' give you',shares,'shares) ', profit);
+	log.info('\t','Profit (If buying with',currency,this.currency,' gives you',shares,'shares) ', profit);
 	log.info('\t','Threshold of',this.strategy.threshold,' is',(profit>=this.strategy.threshold?"":"not"),'met');
 
-	/*
-	var profitPercent = ((sell-buy)/buy)*100,
-		fee = (currency*this.fee),
-		profit = ((currency-fee)/buy).toFixed(8);
-
-
-	log.info('\t','Profit %: ', profitPercent.toFixed(2));
-	log.info('\t','Profit (',this.currency,'): ', profit);
-	*/
-
-
-	//use latest available currency for the user
-	log.info('')
-
+	this.wallCheck();
+	
 	//run throught the models to see where the profit margin lies
-	log.info('Running against models')
+	log.info('Running models...')
 
-	//
+	//find 3 (conservative, moderate, aggressive) Sell Order points assuming the top Buy Order spot
+
+	//find 3 (conservative, moderate, aggressive) Buy Order points assuming top Sell Order spot
+
+	//correlate the 3 Buy Order spots with 3 Sell Order spots
+
+	//shift to accomodate any walls
+
+	//find likelihood of each tolerance being accepted given the amount of BTC being traded. More BTC "in the way" means less likelihood
+
+	//find momentum
+
+	//find trend
+
+	/*
+		startTrading(): 
+
+		reassess walls,
+		reassess with new orders,
+		find optimal price within accepted tolerance range given a set of orders (not every Order is sequential, so maximize the trade price given the range of existing orders),
+		execute trade given optimal price
+
+	*/
 
 }
 
@@ -200,6 +216,28 @@ Insights.prototype.Trends = function(history){
 
 	findPeaks();
 	findValleys();
+}
+
+Insights.prototype.wallCheck = function(){
+	log.info('Checking for walls...');
+	var wallAmount = 1, //in BTC. TODO: What is a more accurate way to diagnose a wall?
+		walls = {},
+		temp = [];
+	platform.market.orderbook['sellorders'].forEach( function(order, i){
+		if( order.total > wallAmount){
+			//log.info('Sell Wall found. Index: ',i,'| Amount: ',order.total);
+			temp.push({'index' : i, 'amount' : order.total});
+		}
+	});
+	platform.market.walls['sell'] = temp;
+	temp=[];
+	platform.market.orderbook['buyorders'].forEach( function(order, i){
+		if( order.total > wallAmount){
+			//log.info('Buy Wall found: Index: ',i,'| Amount: ',order.total);
+			temp.push({'index' : i, 'amount' : order.total});
+		}
+	});
+	platform.market.walls['buy'] = temp;
 }
 
 module.exports = Insights;

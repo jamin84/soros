@@ -11,6 +11,9 @@ var _ = require('lodash'),
 var Manager = function(){
 	_.bindAll(this);
 
+	this.orderbook = {};
+	this.walls = {}
+
 	//init and get data when invoked
 }
 
