@@ -63,12 +63,17 @@ loadMarketData = function(next){
 	//get orderbook
 	//get history
 
-	var MarketManager = require(coreDir + 'marketManager');
-	platform.market = new MarketManager(platform);
+	var Market = require(coreDir + 'marketManager');
+	platform.market = new Market();
 
 	//do this within the module?
-	platform.market.getData();
-	next();
+	async.series([
+		platform.market.getData
+		], 
+		function(){
+			next()
+		}
+	);
 
 },
 runMarketAnalysis = function(next){
@@ -76,8 +81,14 @@ runMarketAnalysis = function(next){
 	platform.analysis = new Insights(platform);
 
 	//do this within the module?
-	platform.analysis.run();
-	next();
+	
+	async.series([
+		platform.analysis.run
+		], 
+		function(){
+			next()
+		}
+	);
 }
 
 async.series(

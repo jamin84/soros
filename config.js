@@ -32,18 +32,18 @@ config.market = {
 config.strategy = {
 	'models' : [{
 		'type' : 'conservative',
-		'profitMin' : .05,
-		'profitMax' : 5
+		'profitMin' : .01,
+		'profitMax' : .05
 	},
 	{
 		'type' : 'moderate',
-		'profitMin' : 5.01,
-		'profitMax' : 10
+		'profitMin' : .0501,
+		'profitMax' : .1
 	},
 	{
 		'type' : 'aggressive',
-		'profitMin' : 10.01,
-		'profitMax' : -1
+		'profitMin' : .1001,
+		'profitMax' : .15
 	}],
 	'threshold' : .0001
 }

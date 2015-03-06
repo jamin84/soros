@@ -37,7 +37,6 @@ Trader.prototype.returnOrderbook = function(market, callback) {
 
   client.getmarketid(market, function(market_id) {
 
-    log.info("Grabbing Orderbook for id", market);
     client.singleorderdata(market_id, function(orders){
       var orderbook = {};
 
@@ -76,10 +75,9 @@ Trader.prototype.return_trades = function(market, callback) {
 
   //log.debug('client is ', client);
   client.getmarketid(market, function(market_id) {
-      //log.debug('id is', market_id);
+
       // Display user's trades in that market
       client.markettrades(market_id, function(trades) {
-          m_id = market_id;
           //log.debug("Grabbing trades for id ", market_id);
           if(trades.length) {
             //log.debug("There are ", trades.length, 'trades');
