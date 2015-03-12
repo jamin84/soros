@@ -10,8 +10,8 @@ var Trader = function(config) {
   this.key = config.key;
   this.secret = config.secret;
   this.currency = config.currency;
-  this.asset = config.asset;
-  this.pair = config.asset.toUpperCase() + config.currency.toUpperCase();
+  this.asset = '';//config.asset;
+  this.pair = '';//config.asset.toUpperCase() + config.currency.toUpperCase();
   
   if( config.market_id )
     this.market_id = config.market_id;
@@ -24,16 +24,22 @@ var Trader = function(config) {
     2000
   );
 
-  this.market = this.pair;
+  this.market = '';
 
   _.bindAll(this);
 }
 
-Trader.prototype.returnOrderbook = function(market, callback) {
+Trader.prototype.setMarket = function(asset, pair){
+  log.info('Setting market as',asset);
+  this.asset = asset;
+  this.pair = pair;
+  this.market = pair;
+}
+
+Trader.prototype.returnOrderbook = function(asset, market, callback) {
 
   var main_trades,
-      client = this.cryptsy,
-      asset = this.asset;
+      client = this.cryptsy;
 
   client.getmarketid(market, function(market_id) {
 
@@ -160,7 +166,25 @@ Trader.prototype.getOrderbook = function(callback, descending) {
     callback(null, orders);
   };
 
-  this.returnOrderbook(mkt_id, _.bind(process, this));
+  this.returnOrderbook(this.asset, mkt_id, _.bind(process, this));
+
+}
+
+Trader.prototype.getMarketOrderbook = function(asset, mkt_id, callback, descending) {
+  log.info("Grabbing Orderbook for id", mkt_id);
+  var args = _.toArray(arguments);
+
+  var process = function(err, orders) {
+    //log.debug("Err is ", err, 'and length of trades is', trades);
+    if(err || !orders || orders.length === 0)
+      return this.retry(this.getOrderbook, args, err);
+
+    var f = parseFloat;
+
+    callback(null, orders);
+  };
+
+  this.returnOrderbook(asset, mkt_id, _.bind(process, this));
 
 }
 
@@ -266,24 +290,14 @@ Trader.prototype.getPortfolio = function(callback) {
       return this.retry(this.getPortfolio, args, null);
 
     balances = data.balances_available;
-    holds = data.balances_hold; 
+    holds = data.balances_hold;
 
-    curr_balance = parseFloat(balances[curr])
-    asst_balance = parseFloat(balances[asst]);
-/*
-    if(holds) {
-      if(parseFloat(holds[curr])){
-        curr_balance -= parseFloat(holds[curr])
-      }
-      
-      if( parseFloat(holds[asst])){
-        asst_balance -= parseFloat(holds[asst]);
-      }
-    }
-*/   
     var portfolio = [];
-    portfolio.push({name: curr, amount: curr_balance});
-    portfolio.push({name: asst, amount: asst_balance});
+
+    _.forEach(balances, function(balance, key){
+      if(balance > 0)portfolio.push({name: key, amount: parseFloat(balance)});
+    });
+
     callback(null, portfolio);
   }
 

@@ -72,7 +72,7 @@ Insights.prototype.calculateSpread = function(){
 	log.info('\t', 'Spread:', spread)
 	log.info('\t', 'To buy price: ', buy, ' | To sell price: ', sell );
 
-	this.calculateProfit(platform.market.orderbook['buyorders'][0].price, platform.market.orderbook['sellorders'][0].price, .10);//platform.user.getFund('BTC').amount
+	this.calculateProfit(platform.market.orderbook['buyorders'][0].price, platform.market.orderbook['sellorders'][0].price, platform.user.getFund('BTC').amount);
 
 /*
 	var callback = function(err, orderbook){

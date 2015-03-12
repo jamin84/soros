@@ -23,27 +23,6 @@ var async = require('async'),
 	log = require(coreDir + 'log'),
 	Insights = require(coreDir + 'insights');
 
-//TODO: Find the market with best spread rather than explicitly define one.
-
-var traderBot = function(){
-	/*
-
-	Create Insights:
-		1. get history
-		2. get orderbook
-		3. run analysis
-	*/
-	var analysis = new Insights();
-	analysis.run();
-
-	// for each model, see if the current market environment satisfies the conditions
-	// i.e if aggressive is too aggressive, try moderate, then conservative
-
-}
-
-
-//traderBot();
-
 platform = {};
 
 var loadUserDetails = function(next){
@@ -59,10 +38,22 @@ var loadUserDetails = function(next){
 		}
 	);
 },
-loadMarketData = function(next){
-	//get orderbook
-	//get history
+runExchangeAnalysis = function(next){
+	//find the best market of the exchange to trade in
+	var Exchange = require(coreDir + 'exchangeManager');
+	platform.exchange = new Exchange;
 
+	async.series([
+		platform.exchange.findBestMarket,
+		platform.exchange.calculateBestSpread
+		], 
+		function(){
+			next()
+		}
+	);
+
+},
+loadMarketData = function(next){
 	var Market = require(coreDir + 'marketManager');
 	platform.market = new Market();
 
@@ -94,14 +85,30 @@ runMarketAnalysis = function(next){
 async.series(
 	  [
 	  	loadUserDetails,
+	  	runExchangeAnalysis,
 	  	loadMarketData,
 	  	runMarketAnalysis
 	  ],
 	  function() {
 	  	platform.market.startTrading();
 	  }
-	);
+);
 
+//bot #2
+//trade between USDBTC, <asset>BTC, <asset>USD
+tradingBot = function(){
+	async.series(
+		  [
+		  	loadUserDetails,
+		  	runExchangeAnalysis,
+		  	loadMarketData,
+		  	runMarketAnalysis
+		  ],
+		  function() {
+		  	platform.market.startTrading();
+		  }
+	);
+};
 		
 
 

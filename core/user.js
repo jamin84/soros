@@ -21,7 +21,7 @@ var User = function(){
 }
 
 User.prototype.load = function(callback){
-  log.info('Getting balance from', this.exchange.name);
+  log.info('Getting balances from', this.exchange.name,'...');
 
   var prepare = function() {
     this.starting = false;

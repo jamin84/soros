@@ -14,7 +14,7 @@ var _ = require('lodash'),
 var Market = function(){
 	_.bindAll(this);
 	
-  	this.market = new DataProvider(config.market);
+  	this.market = platform.exchange.exchange//new DataProvider(config.market);
 
 	this.history = {};
 	this.orderbook = {};
@@ -39,7 +39,7 @@ Market.prototype.getData = function(callback){
 }
 
 Market.prototype.getHistory = function(since, next){
-	log.info('Grabbing history...');
+	log.info('Grabbing history for',this.market.asset,'...');
 
 	this.market.getTrades(since, function(err, history){
 		platform.market.history = history;
@@ -48,7 +48,7 @@ Market.prototype.getHistory = function(since, next){
 }
 
 Market.prototype.getOrderbook = function(next){
-    log.info("Grabbing Orderbook for id", config.market.asset,config.market.currency);
+    log.info("Grabbing Orderbook for id", this.market.asset,this.market.currency);
 
 	this.market.getOrderbook(function(err, orderbook){
 		platform.market.orderbook = orderbook;
