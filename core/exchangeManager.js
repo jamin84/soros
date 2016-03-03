@@ -18,16 +18,10 @@ var Exchange = function(){
   	this.exchange = new DataProvider(config.market);
 	
   	this.markets = [
-  		{asset : 'DRK', name: 'DRKBTC', spread: 0},
-  		{asset : 'DOGE', name: 'DOGEBTC', spread: 0},
-  		{asset : 'CANN', name: 'CANNBTC', spread: 0},
-  		{asset : 'LTC', name: 'LTCBTC', spread: 0},
-  		{asset : 'NXT', name: 'NXTBTC', spread: 0},
-  		{asset : 'XPY', name: 'XPYBTC', spread: 0},
-  		{asset : 'MAX', name: 'MAXBTC', spread: 0},
-  		{asset : 'URO', name: 'UROBTC', spread: 0}
+  		{asset : 'XBTUSD', name: 'USDBTC', spread: 0}
   	];
   	this.targetMarket = '';
+  	this.exchange.setMarket('XBTUSD', 'USDBTC');
 
 }
 
@@ -61,12 +55,5 @@ Exchange.prototype.calculateBestSpread = function(next){
 	this.exchange.setMarket(sortedMarkets[0].asset, sortedMarkets[0].name);
 	next();
 }
-
-
-
-
-
-
-
 
 module.exports = Exchange;

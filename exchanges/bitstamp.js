@@ -19,6 +19,13 @@ var Trader = function(config) {
   this.bitstamp = new Bitstamp(this.key, this.secret, this.clientID);
 }
 
+Trader.prototype.setMarket = function(asset, pair){
+  log.info('Setting market as',asset);
+  this.asset = asset;
+  this.pair = pair;
+  this.market = pair;
+}
+
 // if the exchange errors we try the same call again after
 // waiting 10 seconds
 Trader.prototype.retry = function(method, args) {

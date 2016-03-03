@@ -6,12 +6,14 @@
 var _ = require('lodash'),
 	moment = require('moment'),
 	log = require('./log.js'),
+    utils = require('./utils'),
 	config = utils.getConfig(),
 	provider = config.market.exchange.toLowerCase(),
 	DataProvider = require('../exchanges/' + provider),
 	utc = moment.utc;
 
 var Market = function(){
+	log.info('Loading market for', this.market.asset,'...');
 	_.bindAll(this);
 	
   	this.market = platform.exchange.exchange//new DataProvider(config.market);

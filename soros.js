@@ -46,13 +46,14 @@ var loadUserDetails = function(next){
 	);
 },
 runExchangeAnalysis = function(next){
+	log.info('Running exachange analysis...');
 	//find the best market of the exchange to trade in
 	var Exchange = require(coreDir + 'exchangeManager');
 	platform.exchange = new Exchange;
 
 	async.series([
-		platform.exchange.findBestMarket,
-		platform.exchange.calculateBestSpread
+		//platform.exchange.findBestMarket,
+		//platform.exchange.calculateBestSpread
 		], 
 		function(){
 			next()
@@ -61,6 +62,7 @@ runExchangeAnalysis = function(next){
 
 },
 loadMarketData = function(next){
+	log.info('Loading market for', this.market.asset,'...');
 	var Market = require(coreDir + 'marketManager');
 	platform.market = new Market();
 
