@@ -2,6 +2,7 @@
   "name": "Soros",
   "version": "0.0.1",
   "description": "A digital currency trading bot for automated trading at various exchanges",
+  "license": "ISC",
   "keywords": [
     "trading",
     "bot",
@@ -13,13 +14,15 @@
   "author": "Ben Van Wagner <benvanwagner@gmail.com>",
   "dependencies": {
     "request" : "2.53.0",
-    "cryptsy-api": "0.1.x",
-    "cryptsyv2-api": "0.0.x",
     "async": "0.2.x",
     "nedb": "0.9.4",
     "line-reader": "0.2.x",
     "lodash": "2.x",
-    "moment": "2.4.x"
+    "moment": "2.4.x",
+    "bitstamp-ws" : "^0.0.4",
+    "mongojs": "^0.18.0",
+    "underscore": "^1.7.0",
+    "winston": "0.8.3"
   },
   "devDependencies": {
     "nodeunit": "0.8.2"

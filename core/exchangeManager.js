@@ -6,10 +6,11 @@
 var _ = require('lodash'),
 	moment = require('moment'),
 	log = require('./log.js'),
+    utils = require('./utils'),
 	config = utils.getConfig(),
 	provider = config.market.exchange.toLowerCase(),
 	DataProvider = require('../exchanges/' + provider),
-	utc = moment.utc;
+	utc = moment.utc
 
 var Exchange = function(){
 	_.bindAll(this);

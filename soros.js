@@ -21,9 +21,16 @@ var async = require('async'),
   	request = require('request'),
 	utils = require(coreDir + 'utils'),
 	log = require(coreDir + 'log'),
-	Insights = require(coreDir + 'insights');
+	Insights = require(coreDir + 'insights'),
+	config = require('./config.js');
 
 platform = {};
+
+var storageservice = require('./services/storage.js');
+var loggingservice = require('./services/loggingservice.js');
+
+var logger = new loggingservice('trader', config.debug);
+var storage = new storageservice(config.exchangeSettings, config.mongoConnectionString, logger);
 
 var loadUserDetails = function(next){
 	var User = require(coreDir + 'user');
